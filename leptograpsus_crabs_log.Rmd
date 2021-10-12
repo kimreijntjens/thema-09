@@ -1,0 +1,260 @@
+---
+title: " Exploratory Data Analysis of Leptograpsus variegatus data "
+author: "Kim Reijntjens"
+date: "14-9-2021"
+output: pdf_document
+---
+
+
+
+waarom is deze analyse relevant / 
+electrophoretic study established the distinctness of the rock crabs from the genus Leptograpsus. in the blue and orange colours given the species name L. variegatus. now that we know that their are two colour forms in the species we can use the morphological data to examine the two species and develop objective criterea for identification of sex and colour.  
+
+Is it possible to predict the sex and species colour of a Leptograpsus variegatus, found at the waters of fremantle, W. Australia,  based on morphological measurements.
+
+the data was from an article of the Australian Journal of Zoology in January 1974. the study "A multivariate study of variation in two species of rock crab of genus
+Leptograpsus"  by N. A. Campbell and  R. J. Mahon. 
+The dataset has 200 rows and 8 columns, describing 5 morphological measurements on 50 crabs each of two colour forms and both sexes, of the species Leptograpsus variegatus collected at Fremantle, W. Australia.
+Measurements taken were: (1) Frontal lobe size (mm) (FL); 
+(2) Rear width (mm) (RW); 
+(3) Carapace length (mm) along the midline (CL); 
+(4) the maximum width of the carapace (mm) (CW); 
+(5) Body depth (mm) (BD).
+https://www.researchgate.net/publication/243766527_A_multivariate_study_of_variation_in_two_species_of_rock_crab_of_genus_Leptograpsus
+
+
+
+```{r}
+
+
+crab_data <- read.csv(file = "C:/Users/kimre/Documents/thema-09/archive/data.csv")
+head(crab_data)
+
+
+summary(crab_data)
+str(crab_data)
+
+
+```
+
+created a own codebook with a description per column.
+the details for the description where pecent on the kaggle but not in a codebook format.
+```{r}
+
+code_book <- read.table(file = "C:/Users/kimre/Documents/thema-09/archive/codebook.txt", sep = ";", header = T)
+code_book
+
+```
+
+we see in the summary of crab_data that the column index has a maximum of 50 as a unique row idenifier. this is because it count from 1-50 for a blue male then 1-50 for a blue female and the same for the orange species.
+
+the species and sex column abbreviations for orange and blue, and male and female. we changed this for the full name for a better readablility.  
+
+```{r}
+
+library(dplyr)
+
+crab_data <- crab_data %>% mutate(sp=recode(sp, 
+                         `B`="Blue",
+                         `O`="Orange"), 
+                     sex=recode(sex, 
+                         `M`="Male",
+                         `F`="Female"))
+head(crab_data)
+
+                     
+
+
+```
+
+lets start to explore the data 
+the first measurement of the crab, the frontal lobe size. 
+
+```{r }
+library(ggplot2)
+
+
+ggplot(crab_data, aes(x=sex, y=FL, fill=sp)) + 
+  geom_boxplot( )  + scale_fill_manual(values=c("royalblue", "orange")) +
+  ggtitle("frontal lobe size from both species of the Leptograpsus variegatus")+
+  ylab("frontal lobe size (mm)")
+  
+
+ 
+```
+if we compare the frontal lobe size of both species as we did in this figure, we see that for both genders (male and female) that the oragne specis has a bigger frontal lobe size.
+
+to get a quick overview of the most useful graphs with this data we use a ggpairs plot.
+
+```{r }
+
+
+library(GGally)
+ggpairs(crab_data, aes(fill = sp) ,lower = list(continuous = wrap("points", alpha = 0.3,    size=0.1)
+              )) + scale_fill_manual(values=c("royalblue", "orange")) + scale_color_manual(values=c("Royalblue", "orange")) +  ggtitle("pairs plot of the data")
+
+ 
+```
+```{r}
+
+pm <- ggpairs(crab_data, mapping = aes(color = sp), columns = c("FL", "RW", "CL", "CW", "BD"))  + scale_fill_manual(values=c("royalblue", "orange")) + scale_color_manual(values=c("Royalblue", "orange"))
+pm
+```
+```{r}
+
+
+pm <- ggpairs(
+  crab_data,
+  mapping = aes(color = sp),
+  lower = list(
+    combo = wrap("facethist", binwidth = 1),
+    continuous = wrap(my_bin, binwidth = c(5, 0.5))
+  )
+) 
+pm
+```
+
+
+as you can see the boxplot form the last plot is also shown in the ggpairs figure. 
+Now you can see cleary that the orange species had bigger size in all the measurements compared to the blue species. Also is the female of the blue species in all measurements a slightly bit bigger than the male. This is not the same for the orange species.
+
+In the histograms you can already see al little bit of the distribution from the data.
+we'll take a closer look by using a denisty plot. this uses the same concept as a histogram, but in a smoothed version. A bonus on using density plots is that it is not affected by the number of bins.
+
+```{r}
+library(tidyverse)
+
+w_density <- crab_data[c(1,4:8)]  # columns you want densities for
+w_density$sp <- w_density$sp[0:100]  # maybe you have a variable to group by
+
+w_density %>%
+    pivot_longer(!sp, names_to = "variable", values_to = "value") %>%
+    ggplot(aes(x = value, colour = sp)) +
+    geom_density(show.legend = TRUE) + 
+    facet_wrap(~variable, scales = "free", ncol = 5) + 
+    ggtitle("density plot of the blue species measurements")
+
+```
+```{r}
+w_density <- crab_data[c(1,4:8)]  # columns you want densities for
+w_density$sp <- w_density$sp[101:200]  # maybe you have a variable to group by
+
+w_density %>%
+    pivot_longer(!sp, names_to = "variable", values_to = "value") %>%
+    ggplot(aes(x = value, colour = sp)) +
+    geom_density(show.legend = TRUE) + 
+    facet_wrap(~variable, ncol = 5) + 
+    ggtitle("density plot of the orange species measurements")
+```
+
+
+
+
+```{r, warning = FALSE} 
+############lables duidelijker maken cw/cl/fl/rw
+
+#head(crab_data)
+
+long_data <- pivot_longer(data = crab_data, cols = 4:8, names_to = "body_part", values_to = "size")
+
+#head(long_data)
+
+
+long_data %>%  ggplot(aes(x = size,  colour = sp)) +
+    geom_density(show.legend = TRUE) + 
+    facet_wrap(~body_part + sex, ncol = 5) +scale_color_manual(values=c("Royalblue", "orange")) + 
+    ggtitle("density plot of the leptograpsus variegatus body measurements")
+  
+  
+```
+First we see the 5 column of each species, and then both. But this time also defided by gender.
+The peaks of a Density Plot help display where values are concentrated over the interval. 
+
+
+
+
+```{r}
+
+ggplot(crab_data, aes(x=CL, y=CW, colour = sp)) +
+  geom_point(size=1.0,alpha=0.6) +
+  geom_line(aes(linetype=sp), size = 0.6) + scale_color_manual(values=c("Royalblue", "orange")) +
+  xlab("Carapace length (mm)") + ylab("Carapace width (mm)") + ggtitle("Line plot of Carapace length and width") 
+
+
+```
+lets now try and find patterns in the data. for this we want to use a Principal component analysis (PCA).
+
+```{r}
+#Dimension conversion for futher analysis:
+#PCA analysis using prcomp
+
+df <- subset(crab_data, select = -c(2,3) )
+row.names(df) <- paste(df$sp, row.names(df), sep="_") 
+df$sp <- NULL
+
+head(df)
+
+df_pca <- prcomp(df)
+
+plot(df_pca$x[,1], df_pca$x[,2])
+```
+```{r}
+df_out <- as.data.frame(df_pca$x)
+df_out$group <- sapply( strsplit(as.character(row.names(df)), "_"), "[[", 1 )
+head(df_out)
+```
+
+```{r}
+library(ggplot2)
+library(grid)
+library(gridExtra)
+
+p<-ggplot(df_out,aes(x=PC1,y=PC2,color=group ))
+p<-p+geom_point() 
+p
+```
+
+```{r}
+#Plot features that contribute to the classification
+
+df_out_r <- as.data.frame(df_pca$rotation)
+df_out_r$feature <- row.names(df_out_r)
+
+df_out_r
+
+p<-ggplot(df_out_r,aes(x=PC1,y=PC2,label=feature,color=feature ))
+p<-p+geom_point() + geom_text(size=8)
+p
+```
+
+```{r}
+library(ggfortify)
+df <- crab_data[4:8]
+pca_res <- prcomp(df, scale. = TRUE)
+
+autoplot(pca_res, data = crab_data, colour = 'sp')
+```
+deze op gender splitsen
+
+```{r}
+set.seed(1)
+autoplot(kmeans(df, 2), data = df)
+```
+
+pca
+histogram
+k-means clustering 
+
+```{r}
+library(cluster)
+autoplot(pam(df, 4), frame = TRUE, frame.type = 'norm')
+```
+
+```{r}
+#crab_data %>% relocate(species, .after = last_col())
+crab_data <- crab_data%>%select(-species,everything())
+
+write.csv(crab_data,"C:/Users/kimre/Documents/thema-09/archive/data1.csv", row.names = FALSE)
+```
+
+
