@@ -1,0 +1,8 @@
+column;description;type
+sp; species B= BLUE O=ORANGE; factor
+sex; M= MALE F=FEMALE; factor
+FL; Frontal lobe size (mm); numeric
+RW; Rear width (mm); numeric
+CL; Carapace length (mm);numeric
+CW; Carapace width (mm);numeric
+BD; Body depth (mm);numeric
