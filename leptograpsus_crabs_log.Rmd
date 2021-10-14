@@ -103,15 +103,15 @@ pm
 ```{r}
 
 
-pm <- ggpairs(
-  crab_data,
-  mapping = aes(color = sp),
-  lower = list(
-    combo = wrap("facethist", binwidth = 1),
-    continuous = wrap(my_bin, binwidth = c(5, 0.5))
-  )
-) 
-pm
+# pm <- ggpairs(
+#   crab_data,
+#   mapping = aes(color = sp),
+#   lower = list(
+#     combo = wrap("facethist", binwidth = 1),
+#     continuous = wrap(my_bin, binwidth = c(5, 0.5))
+#   )
+# ) 
+# pm
 ```
 
 
@@ -251,10 +251,76 @@ autoplot(pam(df, 4), frame = TRUE, frame.type = 'norm')
 ```
 
 ```{r}
-#crab_data %>% relocate(species, .after = last_col())
-crab_data <- crab_data%>%select(-species,everything())
+# #crab_data %>% relocate(species, .after = last_col())
+# crab_data <- crab_data%>%select(-species,everything())
+# 
+# write.csv(crab_data,"C:/Users/kimre/Documents/thema-09/archive/data1.csv", row.names = FALSE)
+```
+heb je classifier achter aan gezet omdat weka daar als default naar kijkt, is makkelijker werken.
 
-write.csv(crab_data,"C:/Users/kimre/Documents/thema-09/archive/data1.csv", row.names = FALSE)
+
+```{r, fig.dim = c(8, 6)}
+knitr::include_graphics("C:/Users/kimre/Documents/thema-09/algorithmen.png")
+```
+
+je ziet dat Simple logistic het als super goed doet. die heb je liever dan nearest neighbor omdat dat een model is. K nearest neighbor gebruikt de data als model.
+
+
+Cost sensitive learning:
+Beperkte cost door tijdens het trainen van het model de instances ongelijk te wegen.
+De drempel verandert niet, het model wel.
+Kies MinimizeExpectedCost = False
+dit is gedaan om Simple Logistic nog iets beter proberen te krijgen.
+met een om de foutief gelabelde waardes een zwaardere fout op te leggen zodat die die hopenlijk goed ging doen. dit resulteerde op een waarde van 99.5%.  
+Cost Matrix
+ 0    1.5 
+ 2    0   
+ 
+ 
+ 
+ stacking/baggin/boosting proberen
+ 
+ baggin op J48
+ === Confusion Matrix ===
+
+  a  b   <-- classified as
+ 91  9 |  a = Blue
+  5 95 |  b = Orange
+  
+  verbeterde het naar een Weighted Avg. TPR van 0,930
+  
+  stacking leverde nergens een verbetering op, alleen een veel slechter resultaat. 
+  
+boosting gaf ook op J48
+
+=== Confusion Matrix ===
+
+  a  b   <-- classified as
+ 92  8 |  a = Blue
+  6 94 |  b = Orange
+
+
+een verbetering maar dan net anders dan bij baggin
+wel ook een Weighted Avg. TPR van 0,930.
+
+en daarnaast op het Simple Logistic algorithme 
+=== Confusion Matrix ===
+
+   a   b   <-- classified as
+ 100   0 |   a = Blue
+   1  99 |   b = Orange
+en een Weighted Avg. TPR   0,995
+wat het zelfde resultaat geeft als het gebruik van cost sensitive learning.
+door gebruik te maken van een costSensativeClassifier met een cost matrix zoals hierboven beschreven.
+
+
+```{r, fig.dim = c(8, 6) }
+# eerste div test gebruiken NIET deze
+knitr::include_graphics("C:/Users/kimre/Documents/thema-09/weka/dev_1.png")
 ```
 
 
+```{r, fig.dim = c(8, 6) }
+knitr::include_graphics("C:/Users/kimre/Documents/thema-09/weka/dev_2.png")
+```
+na het verbeteren van het Simple logistic alogrithm en draaien op 20 repetitions werd ook nearest neighbor significant lager dan Simple Logistic. 
