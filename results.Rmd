@@ -1,0 +1,241 @@
+---
+title: "Variation in two species Leptograpsus variegatus"
+author: "Kim Reijntjens"
+date: "4-10-2021"
+output: pdf_document
+---
+
+
+# Introduction 
+This data is  from an research article of the Australian Journal of Zoology in January 1974. The study "A multivariate study of variation in two species of rock crab of genus Leptograpsus" by N. A. Campbell and  R. J. Mahon. The Leptograpsus variegatus is used in a lot of researches for Crustacea. In most of these study’s it is necessary to know the differences between male and female in both of the species. Electrophoretic study established the distinctness of the rock crabs from the genus Leptograpsus. In the blue and orange colours given the species name L. variegatus. now that we know that there are two colour forms in the species we can use the morphological data to examine the two species and develop objective criteria for identification of sex and colour.   
+
+## 1.1 Goal
+The goal of this project is to answer the question: "Is it possible to predict the sex and species colour of a *Leptograpsus variegatus*, found at the waters of fremantle, W. Australia,  based on morphological measurements." Before we can answer this question we clean and adjust the data where this is necessary, and make sure it is fit to be used for machine learning.
+
+
+## 1.2 Data explanation
+The dataset has 200 rows and 8 columns, describing 5 morphological measurements on 50 crabs each of two colour forms and both sexes, of the species*Leptograpsus variegatus* collected at Fremantle, W. Australia.
+Measurements taken were: (1) Frontal lobe size (mm) (FL); 
+(2) Rear width (mm) (RW); 
+(3) Carapace length (mm) along the midline (CL); 
+(4) the maximum width of the carapace (mm) (CW); 
+(5) Body depth (mm) (BD).
+https://www.researchgate.net/publication/243766527_A_multivariate_study_of_variation_in_two_species_of_rock_crab_of_genus_Leptograpsus
+
+
+
+
+```{r setup, echo = FALSE}
+#library to create a pretty table in the pdf product
+library(knitr)
+crab_data <- read.csv(file = "C:/Users/kimre/Documents/thema-09/archive/data.csv")
+kable(head(crab_data), caption = " An overview from the fist lines of the date")
+
+
+
+
+```
+
+created a own codebook with a description per column.
+the details for the description where documented in the original article but not in a codebook format.
+
+```{r,echo = FALSE}
+
+code_book <- read.table(file = "C:/Users/kimre/Documents/thema-09/archive/codebook.txt", sep = ";", header = T)
+kable(code_book, caption = "A codebook for the data ")
+
+```
+
+```{r, echo = FALSE }
+knitr::kable(summary(crab_data))
+```
+
+
+A summary is an easy but super useful first analysis of the data. It shows that there are 100 of the blue and 100 of the orange species, also 100 females and 100 males. the column index has a maximum of 50 as a unique row idenifier. This is because it count from 1-50 for a blue male then 1-50 for a blue female and the same for the orange species.
+
+```{r, echo = FALSE, message = FALSE}
+#check for NA falues
+kable(apply(crab_data, 2, function(x) any(is.na(x))), caption = "Table to show per column whether there are missing values FALSE= no missing values found / TRUE = missing values found")
+```
+
+As you can see there are no missing values in any column, so nothing needs to be removed.
+
+```{r, echo=FALSE, message = FALSE}
+library(dplyr)
+
+crab_data <- crab_data %>% mutate(sp=recode(sp, 
+                         `B`="Blue",
+                         `O`="Orange"), 
+                     sex=recode(sex, 
+                         `M`="Male",
+                         `F`="Female"))
+
+colnames(crab_data)<- c("species", "sex", "index","Frontal lobe", "Rear width", "Carapace length", "Carapace width", "Body depth")
+```
+
+
+The GGally library has a package ggpairs that builds a plot matrix on the data. The scatterplots of each numeric variable are drawn on the lower part of the diagonal, and the pearson correlations are drawn on the upper part of the diagonal. Then it shows, for the factor data as dependent on the lower part of the diagonal, histograms. And for factor data as dependent on the upper part of the diagonal boxplots.
+
+```{r, echo=FALSE, message = FALSE, fig.height=crab_data, out.width= "100%", fig.cap="Title: pairs plot of the data: on the X and Y axis the colums of the Leptograpsus variegatus data. Orange colour is the orange species/blue colour is the blue species" }
+
+
+library(GGally)
+ggpairs(crab_data, aes(fill = species) ,lower = list(continuous = wrap("points", alpha = 0.3,    size=0.1)
+              )) + scale_fill_manual(values=c("royalblue", "orange")) + scale_color_manual(values=c("Royalblue", "orange")) 
+
+ 
+```
+\
+\
+\
+
+In the boxplots op the top row you can see that the orange species (in the orange colour) has bigger body measurements in all columns.
+
+```{r, echo=FALSE,fig.cap="Title: Pairs plot of the lower half.: selection of the pairs plot in figure 1. Orange colour is the orange species/blue colour is the blue species"}
+
+ggpairs(crab_data, mapping = aes(color = species),lower = list(continuous = wrap("points", alpha = 0.6,    size=0.6)), columns = c("Frontal lobe","Rear width", "Carapace length", "Carapace width", "Body depth"))  + scale_fill_manual(values=c("royalblue", "orange")) + scale_color_manual(values=c("Royalblue", "orange")) 
+
+```
+
+
+The density plots give an even clearer visual that the orange distribution is more on the right then the blue species. Which  means the values are bigger.
+\
+\
+\
+We will now look at the density plots devided by gender and species.
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+```{r, echo=FALSE, message = FALSE,fig.cap="Title: density plot of the Leptograpsus variegatus body measurements.: density plot of the body measurements with the size in millimeters in the x-axis and density on the Y-axis",  fig.align='center'}
+library(tidyverse)
+long_data <- pivot_longer(data = crab_data, cols = 4:8, names_to = "body_part", values_to = "size")
+
+long_data %>%  ggplot(aes(x = size,  colour = species)) +
+    geom_density(show.legend = TRUE) + 
+   facet_wrap(~body_part + sex, ncol = 5) +    scale_color_manual(values=c("Royalblue", "orange")) 
+```
+
+
+The peaks of a Density Plot help display where values are concentrated over the interval. We can already see that the gender female will be of good use for machine learning because it does not overlap as much as the other plots do.
+
+If we look for patterns in the data. We want to use a Principal component analysis (PCA).
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+
+
+```{r, echo=FALSE }
+
+df <- subset(crab_data, select = -c(2,3) )
+row.names(df) <- paste(df$species, row.names(df), sep="_") 
+df$species <- NULL
+df_pca <- prcomp(df)
+
+df_out <- as.data.frame(df_pca$x)
+
+df_out$group <- sapply( strsplit(as.character(row.names(df)), "_"), "[[", 1 )
+
+```
+
+
+```{r, echo=FALSE, message=FALSE, fig.cap="Title: PCA grouped by species.: Principal component analysis on the dataset for species", fig.width=5, fig.height= 3 }
+library(ggplot2)
+library(grid)
+library(gridExtra)
+
+p<-ggplot(df_out,aes(x=PC1,y=PC2,color=group ))
+p<-p+geom_point() +    scale_color_manual(values=c("Royalblue", "orange"))
+p
+
+```
+
+
+
+
+```{r, echo=FALSE, fig.cap="Title: PCA grouped by sex.: Principal component analysis on the dataset for gender", fig.width=5, fig.height= 3 }
+df <- subset(crab_data, select = -c(3) )
+row.names(df) <- paste(df$species, row.names(df), sep="_") 
+row.names(df) <- paste(df$sex, row.names(df), sep="_") 
+df$sex <- NULL
+df$species <- NULL
+
+
+df_out <- as.data.frame(df_pca$x)
+df_out$group <- sapply( strsplit(as.character(row.names(df)), "_"), "[[", 1 )
+df_pca <- prcomp(df)
+
+p<-ggplot(df_out,aes(x=PC1,y=PC2,color=group ))
+p<-p+geom_point() +    scale_color_manual(values=c("deeppink2", "deepskyblue")) 
+p
+```
+
+
+Both PCA plots give a good separation on both sex and species. Which will be very useful for further machine learning research. But if you closely compare both of the PCA plots you can even tell that the top half of figure(5) is female which means there is also a pattern in the sex of the species, this was not yet shown in the previous graphs.
+\
+\
+\
+\
+\
+\
+\
+\
+
+```{r, echo=FALSE, fig.cap="Title: PCA grouped by body measurements.: Principal component analysis grouped per column", , fig.width=5, fig.height= 3}
+df_out_r <- as.data.frame(df_pca$rotation)
+df_out_r$feature <- row.names(df_out_r)
+
+
+
+p<-ggplot(df_out_r,aes(x=PC1,y=PC2,label=feature,color=feature ))
+p<-p+geom_point() + geom_text(size=8) 
+p
+
+
+```
+
+
+If we look back at the density plot of body measurements (figure 3) and compare that with (figure 6). you'll notice that the distribution of the Carapace length and the Carapace width are alike, and so closely placed together in this PCA plot grouped by body measurement. same for the Frontal lobe size and Body depth. 
+
+# Discussion and conclusion
+
+The data was collected at Fremantle, W.A. (32"S., 117"E.). containing 200 animals of the rock crab *Leptograpsus variegatus*. 50 males and 50 females of each colour form of the species. All samples were collected at night. Measurements were taken by one of the authors from the original study: "A multivariate study of variation in two species of rock crab of genus
+Leptograpsus" posted in the Australian journal of Zoology(jan 1974). The authors being N. A. Campbell(Division of Mathematical Statistics, CSIRO, Floreat Park, W.A. 6014.) and R. J. Mahon(Zoology Department, University of Western Australia, Nedlands, W.A. 6009). This dataset with 2 factor and 5 numeric datatypes is easy to use for further research. The data has no missing values and is evenly distributed. In our study,
+all of the characters examined gave frequency distributions which overlapped almost completely, while the scatter diagrams for two characters showed some overlap. The data shows that there are indeed differences between the orange and blue species. And also between the males and females of the species. 
+
+
+## Conclusion
+the goal was to understand the given dataset and to clean the data.
+It is yet to discover if it is possible to predict the sex and species type of the rock crab *Leptograpsus variegatus* with the use of machine learning. The data shows good prospect for the use of machine learning because of the patterns and the correlation that is found in the data.
+
+
+https://github.com/kimreijntjens/thema-09
+https://github.com/kimreijntjens/wekarunner
