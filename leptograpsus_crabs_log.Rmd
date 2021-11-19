@@ -7,12 +7,14 @@ output: pdf_document
 
 
 
-waarom is deze analyse relevant / 
-electrophoretic study established the distinctness of the rock crabs from the genus Leptograpsus. in the blue and orange colours given the species name L. variegatus. now that we know that their are two colour forms in the species we can use the morphological data to examine the two species and develop objective criterea for identification of sex and colour.  
+# Relevance of the project
 
+Electrophoretic study established the distinctness of the rock crabs from the genus Leptograpsus. in the blue and orange colours given the species name L. variegatus. now that we know that there are two colour forms in the species we can use the morphological data to examine the two species and develop objective criterea for identification of sex and colour.  
+
+## goal
 Is it possible to predict the sex and species colour of a Leptograpsus variegatus, found at the waters of fremantle, W. Australia,  based on morphological measurements.
 
-the data was from an article of the Australian Journal of Zoology in January 1974. the study "A multivariate study of variation in two species of rock crab of genus
+The data was from an article of the Australian Journal of Zoology in January 1974. The study "A multivariate study of variation in two species of rock crab of genus
 Leptograpsus"  by N. A. Campbell and  R. J. Mahon. 
 The dataset has 200 rows and 8 columns, describing 5 morphological measurements on 50 crabs each of two colour forms and both sexes, of the species Leptograpsus variegatus collected at Fremantle, W. Australia.
 Measurements taken were: (1) Frontal lobe size (mm) (FL); 
@@ -23,34 +25,37 @@ Measurements taken were: (1) Frontal lobe size (mm) (FL);
 https://www.researchgate.net/publication/243766527_A_multivariate_study_of_variation_in_two_species_of_rock_crab_of_genus_Leptograpsus
 
 
-
+## exploration of the data
 ```{r}
 
-
+library(knitr)
 crab_data <- read.csv(file = "C:/Users/kimre/Documents/thema-09/archive/data.csv")
 head(crab_data)
 
 
-summary(crab_data)
+knitr::kable(summary(crab_data))
 str(crab_data)
 
 
 ```
 
-created a own codebook with a description per column.
-the details for the description where pecent on the kaggle but not in a codebook format.
+We created a own codebook with a description per column.
+The details for the description where present on the kaggle but not in a codebook format.
 ```{r}
 
 code_book <- read.table(file = "C:/Users/kimre/Documents/thema-09/archive/codebook.txt", sep = ";", header = T)
-code_book
+kable(code_book, caption = "A codebook for the data ")
 
 ```
 
-we see in the summary of crab_data that the column index has a maximum of 50 as a unique row idenifier. this is because it count from 1-50 for a blue male then 1-50 for a blue female and the same for the orange species.
+We see in the summary of crab_data that the column index has a maximum of 50 as a unique row identifier. this is because it counts from 1-50 for a blue male then 1-50 for a blue female and the same for the orange species.
 
-the species and sex column abbreviations for orange and blue, and male and female. we changed this for the full name for a better readablility.  
+The species and sex column abbreviations for orange and blue, and male and female. we changed this for the full name for a better readability.  
 
 ```{r}
+
+#check for NA falues
+kable(apply(crab_data, 2, function(x) any(is.na(x))), caption = "Table to show per column whether there are missing values FALSE= no missing values found / TRUE = missing values found")
 
 library(dplyr)
 
@@ -60,21 +65,22 @@ crab_data <- crab_data %>% mutate(sp=recode(sp,
                      sex=recode(sex, 
                          `M`="Male",
                          `F`="Female"))
-head(crab_data)
 
                      
+colnames(crab_data)<- c("species", "sex", "index","Frontal lobe", "Rear width", "Carapace length", "Carapace width", "Body depth")
 
-
+head(crab_data)
 ```
 
-lets start to explore the data 
-the first measurement of the crab, the frontal lobe size. 
+
+Lets start to explore the data 
+The first measurement of the crab, the frontal lobe size. 
 
 ```{r }
 library(ggplot2)
 
 
-ggplot(crab_data, aes(x=sex, y=FL, fill=sp)) + 
+ggplot(crab_data, aes(x=sex, y=`Frontal lobe`, fill=species)) + 
   geom_boxplot( )  + scale_fill_manual(values=c("royalblue", "orange")) +
   ggtitle("frontal lobe size from both species of the Leptograpsus variegatus")+
   ylab("frontal lobe size (mm)")
@@ -82,103 +88,100 @@ ggplot(crab_data, aes(x=sex, y=FL, fill=sp)) +
 
  
 ```
-if we compare the frontal lobe size of both species as we did in this figure, we see that for both genders (male and female) that the oragne specis has a bigger frontal lobe size.
+If we compare the frontal lobe size of both species as we did in this figure, we see that for both genders (male and female) that the oragne specis has a bigger frontal lobe size.
 
-to get a quick overview of the most useful graphs with this data we use a ggpairs plot.
+To get a quick overview of the most useful graphs with this data we use a ggpairs plot.
 
-```{r }
+```{r, fig.height=crab_data, out.width= "100%", fig.cap="Title: pairs plot of the data: on the X and Y axis the colums of the Leptograpsus variegatus data. Orange colour is the orange species/blue colour is the blue species" }
 
 
 library(GGally)
-ggpairs(crab_data, aes(fill = sp) ,lower = list(continuous = wrap("points", alpha = 0.3,    size=0.1)
-              )) + scale_fill_manual(values=c("royalblue", "orange")) + scale_color_manual(values=c("Royalblue", "orange")) +  ggtitle("pairs plot of the data")
-
- 
+ggpairs(crab_data, aes(fill = species) ,lower = list(continuous = wrap("points", alpha = 0.3,    size=0.1)
+              )) + scale_fill_manual(values=c("royalblue", "orange")) + scale_color_manual(values=c("Royalblue", "orange")) 
 ```
-```{r}
 
-pm <- ggpairs(crab_data, mapping = aes(color = sp), columns = c("FL", "RW", "CL", "CW", "BD"))  + scale_fill_manual(values=c("royalblue", "orange")) + scale_color_manual(values=c("Royalblue", "orange"))
-pm
-```
-```{r}
+/
+/
 
+```{r,fig.cap="Title: Pairs plot of the lower half.: selection of the pairs plot in figure 1. Orange colour is the orange species/blue colour is the blue species"}
 
-# pm <- ggpairs(
-#   crab_data,
-#   mapping = aes(color = sp),
-#   lower = list(
-#     combo = wrap("facethist", binwidth = 1),
-#     continuous = wrap(my_bin, binwidth = c(5, 0.5))
-#   )
-# ) 
-# pm
+ggpairs(crab_data, mapping = aes(color = species),lower = list(continuous = wrap("points", alpha = 0.6,    size=0.6)), columns = c("Frontal lobe","Rear width", "Carapace length", "Carapace width", "Body depth"))  + scale_fill_manual(values=c("royalblue", "orange")) + scale_color_manual(values=c("Royalblue", "orange")) 
 ```
 
 
-as you can see the boxplot form the last plot is also shown in the ggpairs figure. 
-Now you can see cleary that the orange species had bigger size in all the measurements compared to the blue species. Also is the female of the blue species in all measurements a slightly bit bigger than the male. This is not the same for the orange species.
+As you can see the boxplot form the last plot is also shown in the ggpairs figure. 
+Now you can see clearly that the orange species had bigger size in all the measurements compared to the blue species. Also is the female of the blue species in all measurements a slightly bit bigger than the male. This is not the same for the orange species.
 
-In the histograms you can already see al little bit of the distribution from the data.
-we'll take a closer look by using a denisty plot. this uses the same concept as a histogram, but in a smoothed version. A bonus on using density plots is that it is not affected by the number of bins.
+In the histograms you can already see a little bit of the distribution from the data.
+We'll take a closer look by using a density plot. this uses the same concept as a histogram, but in a smoothed version. A bonus on using density plots is that it is not affected by the number of bins.
 
-```{r}
+```{r, fig.cap="Title: density plot of the leptograpsus variegatus body measurements.: density plot of the body measurements with the size in milimeters in the x-axis and density on the Y-axis",  fig.align='center'}
 library(tidyverse)
+long_data <- pivot_longer(data = crab_data, cols = 4:8, names_to = "body_part", values_to = "size")
 
-w_density <- crab_data[c(1,4:8)]  # columns you want densities for
-w_density$sp <- w_density$sp[0:100]  # maybe you have a variable to group by
-
-w_density %>%
-    pivot_longer(!sp, names_to = "variable", values_to = "value") %>%
-    ggplot(aes(x = value, colour = sp)) +
+long_data %>%  ggplot(aes(x = size,  colour = species)) +
     geom_density(show.legend = TRUE) + 
-    facet_wrap(~variable, scales = "free", ncol = 5) + 
-    ggtitle("density plot of the blue species measurements")
+   facet_wrap(~body_part + sex, ncol = 5) +    scale_color_manual(values=c("Royalblue", "orange")) 
 
 ```
+ 
+ 
+\
+The peaks of a Density Plot help display where values are concentrated over the interval. We can already
+see that the gender female will be of good use for machine learning because is does not overlap as much as
+the other plots do.
+If we look for patterns in the data. We want to use a Principal component analysis (PCA).
+
 ```{r}
 w_density <- crab_data[c(1,4:8)]  # columns you want densities for
-w_density$sp <- w_density$sp[101:200]  # maybe you have a variable to group by
+w_density$species <- w_density$species[101:200]  # maybe you have a variable to group by
+```
 
+```{r, fig.cap="Title: density plot of the orange species measurements. "}
 w_density %>%
-    pivot_longer(!sp, names_to = "variable", values_to = "value") %>%
-    ggplot(aes(x = value, colour = sp)) +
+    pivot_longer(!species, names_to = "variable", values_to = "value") %>%
+    ggplot(aes(x = value, colour = species)) +
     geom_density(show.legend = TRUE) + 
-    facet_wrap(~variable, ncol = 5) + 
-    ggtitle("density plot of the orange species measurements")
+    facet_wrap(~variable, ncol = 5) 
 ```
 
 
 
 
 ```{r, warning = FALSE} 
-############lables duidelijker maken cw/cl/fl/rw
+
 
 #head(crab_data)
 
 long_data <- pivot_longer(data = crab_data, cols = 4:8, names_to = "body_part", values_to = "size")
 
 #head(long_data)
+```
+/ 
+/ 
 
-
-long_data %>%  ggplot(aes(x = size,  colour = sp)) +
+```{r, warning = FALSE, fig.cap="Title: density plot of the leptograpsus variegatus body measurements"}
+long_data %>%  ggplot(aes(x = size,  colour = species)) +
     geom_density(show.legend = TRUE) + 
-    facet_wrap(~body_part + sex, ncol = 5) +scale_color_manual(values=c("Royalblue", "orange")) + 
-    ggtitle("density plot of the leptograpsus variegatus body measurements")
+    facet_wrap(~body_part + sex, ncol = 5) +scale_color_manual(values=c("Royalblue", "orange"))
   
   
 ```
-First we see the 5 column of each species, and then both. But this time also defided by gender.
-The peaks of a Density Plot help display where values are concentrated over the interval. 
+/
+/
+
+First we see the 5 columns of each species, and then both species colors. But this time also devided by gender.
+The peaks of a Density Plot helps display where values are concentrated over the interval. 
 
 
 
 
-```{r}
+```{r, fig.cap="Title: Line plot of Carapace length and width."}
 
-ggplot(crab_data, aes(x=CL, y=CW, colour = sp)) +
+ggplot(crab_data, aes(x=`Carapace length`, y=`Carapace width`, colour = species)) +
   geom_point(size=1.0,alpha=0.6) +
-  geom_line(aes(linetype=sp), size = 0.6) + scale_color_manual(values=c("Royalblue", "orange")) +
-  xlab("Carapace length (mm)") + ylab("Carapace width (mm)") + ggtitle("Line plot of Carapace length and width") 
+  geom_line(aes(linetype=species), size = 0.6) + scale_color_manual(values=c("Royalblue", "orange")) +
+  xlab("Carapace length (mm)") + ylab("Carapace width (mm)") 
 
 
 ```
@@ -189,8 +192,8 @@ lets now try and find patterns in the data. for this we want to use a Principal 
 #PCA analysis using prcomp
 
 df <- subset(crab_data, select = -c(2,3) )
-row.names(df) <- paste(df$sp, row.names(df), sep="_") 
-df$sp <- NULL
+row.names(df) <- paste(df$species, row.names(df), sep="_") 
+df$species <- NULL
 
 head(df)
 
@@ -210,7 +213,7 @@ library(grid)
 library(gridExtra)
 
 p<-ggplot(df_out,aes(x=PC1,y=PC2,color=group ))
-p<-p+geom_point() 
+p<-p+geom_point() +    scale_color_manual(values=c("Royalblue", "orange"))
 p
 ```
 
@@ -232,95 +235,122 @@ library(ggfortify)
 df <- crab_data[4:8]
 pca_res <- prcomp(df, scale. = TRUE)
 
-autoplot(pca_res, data = crab_data, colour = 'sp')
+autoplot(pca_res, data = crab_data, colour = 'species')
 ```
-deze op gender splitsen
+
 
 ```{r}
 set.seed(1)
 autoplot(kmeans(df, 2), data = df)
 ```
 
-pca
-histogram
-k-means clustering 
 
-```{r}
-library(cluster)
-autoplot(pam(df, 4), frame = TRUE, frame.type = 'norm')
+```{r, include=FALSE, echo=FALSE}
+#library(cluster)
+#autoplot(pam(df, 4), frame = TRUE, frame.type = 'norm')
 ```
 
+From this point we will start using the data for classifier evalution in Weka.
+The data is used for training of a model algorithm that will eventually tell us with what species colour of gender we are dealing with, if we will provide it a new instance.
 ```{r}
-# #crab_data %>% relocate(species, .after = last_col())
-# crab_data <- crab_data%>%select(-species,everything())
-# 
-# write.csv(crab_data,"C:/Users/kimre/Documents/thema-09/archive/data1.csv", row.names = FALSE)
+
+crab_data <- crab_data%>%select(-species,everything())
+ 
+write.csv(crab_data,"C:/Users/kimre/Documents/thema-09/archive/data1.csv", row.names = FALSE)
 ```
-heb je classifier achter aan gezet omdat weka daar als default naar kijkt, is makkelijker werken.
+The classifier values is relocated to the last column of the dataset. This because weka expects as default to have the classifier value in the last column.
 
+After exploring the dataset we start investigating the standard algorithms that Weka provides. In the table below you can see the perfomance of these algorithms. You can see that they all have a high true positive avg, this super accurate performance is due to the clean dataset. Only ZeroR scores a 50 percent accurary with 100 out of 200 instances classified true positive and 100 out of 200 classified false positive. This is because the algorithm ZeroR only looks at our species attribute and chooses the most common class value which in our species attribute is 50 percent 'blue species' and 50 percent "orange species". 
 
-```{r, fig.dim = c(8, 6)}
+```{r, out.width = "400px"}
 knitr::include_graphics("C:/Users/kimre/Documents/thema-09/algorithmen.png")
 ```
 
-je ziet dat Simple logistic het als super goed doet. die heb je liever dan nearest neighbor omdat dat een model is. K nearest neighbor gebruikt de data als model.
+
+Simple Logistic and Nearest Neighbor are both high scoring algortihms. We will try to optimize the Simple Logistic model a bit more, we prefer Simple Logistic over Nearest Neighbor because the score is simply higher. Simple logistic is also preferable because the Nearest neighbor alortihm uses the data as model an does not seperate in trainings and testing data. The use of a training,testing and validation data prevents overfitting on the data.
 
 
-Cost sensitive learning:
-Beperkte cost door tijdens het trainen van het model de instances ongelijk te wegen.
-De drempel verandert niet, het model wel.
-Kies MinimizeExpectedCost = False
-dit is gedaan om Simple Logistic nog iets beter proberen te krijgen.
-met een om de foutief gelabelde waardes een zwaardere fout op te leggen zodat die die hopenlijk goed ging doen. dit resulteerde op een waarde van 99.5%.  
-Cost Matrix
- 0    1.5 
- 2    0   
- 
- 
- 
- stacking/baggin/boosting proberen
- 
- baggin op J48
- === Confusion Matrix ===
 
-  a  b   <-- classified as
- 91  9 |  a = Blue
-  5 95 |  b = Orange
+The Simple logistic algorthim is improved by the use of a
+Cost sensitive learner:
+"If the costs are known, they can be incorporated into a financial analysis of the
+decision-making process. In the two-class case, in which the confusion matrix is
+like that, the two kinds of error—FPs and FNs—will have different costs; likewise, the two types of correct classification may have different benefits.
+In the two-class case, costs can be summarized in the form of a 232 matrix in which the diagonal elements represent the two types of correct classification and
+the off-diagonal elements represent the two types of error. In the multiclass case this generalizes to a square matrix whose size is the number of classes, and again
+the diagonal elements represent the cost of correct classification." (bron:Data mining practical machine learning tools and techniques. by Ian H. Witten, Eibe Frank and Mark A. Hall) 
+
+MinimizeExpectedCost = False
+with a cost matrix shown below with a 1.5x cost on the false negatives and a 2x cost the false positives.
+this resulted in a 99.5 percent accuracy.
+ 
+ 
+\begin{table}[h!]
+\centering
+\begin{tabular}{||c c||} 
+ \hline
+ cost matrix & \\ [0.5ex] 
+ \hline\hline
+ 0 & 1.5 \\ 
+ 2 & 0 \\[1ex] 
+ \hline
+\end{tabular}
+\end{table}
+
+ 
+After this we experimented with meta-learners to improve the algotirhm performances of J48. With stacking,bagging and boosting.
+ 
+ 
+Baggin on J48 gives us a improved performance of a true positive rate from 0.91 to 0.93.
+ 
+Confusion  matix            J48 + bagging           
+--------   --------------   ----------------
+a          b                <-- classified as
+91         9                a = Blue
+5          95               b = Orange
+---------  --------------   ----------------
   
-  verbeterde het naar een Weighted Avg. TPR van 0,930
+ 
+
+Stacking improved nothing in the algorithms it only made it performe even worse.
   
-  stacking leverde nergens een verbetering op, alleen een veel slechter resultaat. 
+Boosting on J48 also made an improvement of 0.02 on the true positive rate but this time in other instances as you can see in the confusion matix on bagging.
+
   
-boosting gaf ook op J48
-
-=== Confusion Matrix ===
-
-  a  b   <-- classified as
- 92  8 |  a = Blue
-  6 94 |  b = Orange
-
-
-een verbetering maar dan net anders dan bij baggin
-wel ook een Weighted Avg. TPR van 0,930.
-
-en daarnaast op het Simple Logistic algorithme 
-=== Confusion Matrix ===
-
-   a   b   <-- classified as
- 100   0 |   a = Blue
-   1  99 |   b = Orange
-en een Weighted Avg. TPR   0,995
-wat het zelfde resultaat geeft als het gebruik van cost sensitive learning.
-door gebruik te maken van een costSensativeClassifier met een cost matrix zoals hierboven beschreven.
+Confusion  matix            J48 + boosting          
+--------   --------------   ----------------
+a          b                <-- classified as
+92         8                a = Blue
+6          94               b = Orange
+---------  --------------   ----------------  
 
 
-```{r, fig.dim = c(8, 6) }
+And finaly the confusion matix from Simple logistic with the use of a costSensativeClassifier. With an improvement from 0.99 to 0.995. with the one instance extra correclty classified
+   
+Confusion  matix            Simple Logistic          
+--------   --------------   ----------------
+a          b                <-- classified as
+100        0                a = Blue
+1          99               b = Orange
+---------  --------------   ----------------  
+
+
+
+```{r, out.width = "500px", echo=FALSE }
 # eerste div test gebruiken NIET deze
 knitr::include_graphics("C:/Users/kimre/Documents/thema-09/weka/dev_1.png")
 ```
 
 
-```{r, fig.dim = c(8, 6) }
+```{r, out.width = "500px", echo=FALSE }
 knitr::include_graphics("C:/Users/kimre/Documents/thema-09/weka/dev_2.png")
 ```
-na het verbeteren van het Simple logistic alogrithm en draaien op 20 repetitions werd ook nearest neighbor significant lager dan Simple Logistic. 
+Here we see an comparison af the highest scoring algorithms
+in the first run you can see a "*" behind all the algortihms except for the IBK (nearest neighbor) algorithm. The star means that the algorithms are all significantly different.
+After the second run with 20X repetition and the improvement of the Simple Logisitc algorithm is also IBk significantly different.
+
+
+https://github.com/kimreijntjens/thema-09
+https://github.com/kimreijntjens/wekarunner
+
+
